@@ -1,0 +1,109 @@
+#!/bin/bash
+
+set -e
+
+CFLAGS='-Wall -Wextra -Werror -Wpedantic -Ofast'
+DFLAGS='-Wall -Wextra -Werror  -Wpedantic -g3 -DDEBUG'
+FREE='-ffreestanding -nostdlib -Wno-unused-function'
+LDFLAGS=
+
+CCS='gcc musl-gcc clang musl-clang mingw-gcc tcc'
+
+function clean {    # Clean things
+  rm -rf obj
+  rm -rf release
+  rm -rf debug
+}
+
+function _build_test {
+  CC=$1
+
+    case $CC in
+      gcc)
+        BLDFLAGS=-fwhole-program
+        BCFLAGS="$CFLAGS -static"
+        BDFLAGS="$DFLAGS -static"
+        ;;
+      musl-gcc)
+        BLDFLAGS=-fwhole-program
+        BCFLAGS="$CFLAGS -static"
+        BDFLAGS="$DFLAGS -static"
+        ;;
+      clang)
+        BLDFLAGS=-flto
+        BCFLAGS="$CFLAGS -static"
+        BDFLAGS="$DFLAGS -static"
+        ;;
+      musl-clang)
+        BLDFLAGS=-flto
+        BCFLAGS="$CFLAGS -static"
+        BDFLAGS="$DFLAGS -static"
+        ;;
+      mingw-gcc)
+        BLDFLAGS=-fwhole-program
+        BCFLAGS="$CFLAGS -static"
+        BDFLAGS="$DFLAGS -static"
+        ;;
+      tcc)
+        BLDFLAGS=-fwhole-program
+        BCFLAGS="$CFLAGS"
+        BDFLAGS="$DFLAGS"
+        ;;
+    esac
+
+  set -x
+  # Check that it compiles fine freestanding
+  $CC $BCFLAGS $FREE -c libu.c -o obj/${CC}_rel_libu.o
+  $CC $BDFLAGS $FREE -c libu.c -o obj/${CC}_dbg_libu.o
+
+  # But then compile it with full link time optimization
+  $CC $BCFLAGS $BLDFLAGS main_test.c -o release/${CC}_test
+  $CC $BDFLAGS $BLDFLAGS main_test.c -o debug/${CC}_test
+  set +x
+}
+
+function buildall {    # Build all combinations
+  clean
+
+  mkdir -p obj
+  mkdir -p release
+  mkdir -p debug
+
+  for CC in $CCS; do
+    _build_test $CC
+  done
+}
+
+function checkall {    # Runs the tests
+  buildall
+
+  for exe in debug/* release/*;do 
+    echo $exe
+    $exe
+  done
+}
+
+function check {
+  CC=musl-clang
+  _build_test ${CC}
+  debug/${CC}_test
+  release/${CC}_test
+}
+function linter { # Runs cppcheck on all files
+  cppcheck --suppressions-list=suppressions.txt --inline-suppr --addon=misra.json libu.c
+}
+
+function help {     # Prints help
+    echo "Usage: $0 <task> <args>"
+    echo "Execute a task with the specified arguments."
+    echo "By adding 'alias run=./Taskfile' you can then call it as 'run <task> <args>"
+    echo
+    echo "Tasks:"
+    grep '^function .* #.* ' Taskfile | # Start with function and has # somewhere
+      cut -d' ' -f 2- |                 # Remove the word 'function'
+      tr -d '{' |                       # Remove '{}'
+      sed 's/^/  /g' |                  # Indent by two spaces
+      column --table --separator '#'    # column it using # as the separator
+}
+
+${@:-help}
