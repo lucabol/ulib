@@ -10,7 +10,9 @@ typedef char  Byte;
 typedef intptr_t Size;
 
 #ifdef DEBUG
-#  define ASSERT(c) if (!(c)) {os_trap();}
+#  ifndef ASSERT
+#    define ASSERT(c) if (!(c)) {os_trap();}
+#  endif
 #else
 #  define ASSERT(c)
 #endif
@@ -91,6 +93,7 @@ typedef struct {
 static SpanResult
 tryalloc(Buffer* buf, Size size) {
   ASSERT(validb(buf));
+  ASSERT(0 < size);
 
   if((buf->data.len < size) || avail(buf) < size) {
     return (SpanResult) { .error = true};

@@ -1,6 +1,16 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#ifdef DEBUG
+   bool __gotassert = false;
+#  define ASSERT(cond) do { if(!(cond)) {__gotassert = true;} } while(0)
+#  define TFAILASSERT(stmt) do {                     \
+    __gotassert = false; stmt; TASSERT(__gotassert); \
+  } while(false) 
+#else
+#  define TFAILASSERT(stmt)
+#endif
+
 #include "libu.c"
 #include "os_stdc.c"
 
@@ -60,6 +70,11 @@ test_buffer() {
   TASSERT(tryalloc(&b1, 40).error);
   TASSERT(validb(&b1));
   TASSERT(!tryalloc(&b1, 20).error);
+  TASSERT(validb(&b1));
+  TASSERT(tryalloc(&b1, 1).error);
+
+  b1.index = 0;
+  TFAILASSERT(tryalloc(&b1,0));
 }
 
 int

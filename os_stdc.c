@@ -8,8 +8,7 @@ int themain(int argc, char** argv);
 
 noreturn void
 os_trap(void) {
-  *(volatile int *)0 = 0;
-  while(true) {};
+  abort();
 }
 
 noreturn void
