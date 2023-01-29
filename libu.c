@@ -355,7 +355,7 @@ nextcsvtoken(Span csv, Buffer* value) {
 #define FIRSTSTATE                                \
   Span rest = csv;                                \
   char ch = EOCSV;                                \
-  Byte* tokenPtr = csv.ptr;                       \
+  Byte* startPtr = csv.ptr;                       \
   Byte* endPtr   = 0;                             \
   ADVANCE
 
@@ -363,10 +363,8 @@ nextcsvtoken(Span csv, Buffer* value) {
   name:                                           \
   ADVANCE
 
-#define RET(tokentype)                                                                        \
-  if(tokentype == Newline) return (CsvResult) { Newline, (Span) {tokenPtr, 1}, rest };         \
-  if(endPtr) return (CsvResult) { tokentype, (Span) { tokenPtr, endPtr - tokenPtr - 1}, rest};           \
-  return (CsvResult) { tokentype, (Span) { tokenPtr, rest.ptr - tokenPtr - 1}, rest }
+#define RETTOKEN(tokentype, startPtrIncl, len) \
+  return (CsvResult) { tokentype, (Span) { (startPtrIncl), (len)}, rest }
 
 typedef struct {
   CsvTokenType type;
@@ -379,20 +377,20 @@ nextcsvtokeng(Span csv) {
 
   FIRSTSTATE {
     case EOCSV:
-      RET(End);
+      RETTOKEN(End, startPtr,0);
     case '\n':
-      RET(Newline);
+      RETTOKEN(Newline, startPtr, 1);
     case ',':
-      RET(Value);
+      RETTOKEN(Value,startPtr, rest.ptr - startPtr - 1);
     case '"':
-      tokenPtr++;
+      startPtr++;
       goto SQUOTED;
     default:
       goto SVALUE;
   }
   STATE(SQUOTED) {
     case EOCSV:
-      RET(EEndInQuoted);
+      RETTOKEN(EEndInQuoted, startPtr, rest.ptr - startPtr - 1);
     case '"':
       endPtr = rest.ptr;
       goto SVALUE; // the quote and blank after quote become part of value
@@ -402,7 +400,10 @@ nextcsvtokeng(Span csv) {
   STATE(SVALUE) {
     case EOCSV:
     case ',':
-      RET(Value);
+      if(endPtr)
+        RETTOKEN(Value,startPtr, endPtr - startPtr - 1);
+      else
+        RETTOKEN(Value,startPtr, rest.ptr - startPtr - 1);
     default:
       goto SVALUE; 
   }
