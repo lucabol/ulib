@@ -1,1 +1,2 @@
-misra-c2012-15.5 // multiple return statements from functions
+misra-c2012-15.5  // multiple return statements from functions
+misra-c2012-8.4   // need compatible function declaration before definition of functions (i.e., external symbol should be declared in header files, before defintion)

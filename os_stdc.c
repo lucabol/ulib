@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <stdnoreturn.h>
 
-noreturn void os_trap(void);
-noreturn void os_oom(void);
 int themain(int argc, char** argv);
 
 noreturn void

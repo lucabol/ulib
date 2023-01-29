@@ -3,15 +3,19 @@
 #include <stdnoreturn.h>
 #include <stdlib.h>
 
-noreturn void os_trap(void);
-noreturn void os_oom(void);
-
-typedef char  Byte;
-typedef intptr_t Size;
+#ifdef _MSC_VER
+noreturn void __debugbreak(void);
+#  define TRAP __debugbreak()
+#else
+// This should work only for __GCC__ but it is supported by TCC as well, using assignment to 0 pointer upsets cppcheck
+// and it is diffuclt to suppress because it is expanded at each point of call.
+noreturn void __builtin_trap(void);
+#  define TRAP __builtin_trap() //*(volatile int *)0 = 0
+#endif
 
 #ifdef DEBUG
 #  ifndef ASSERT
-#    define ASSERT(c) if (!(c)) {os_trap();}
+#    define ASSERT(c) if (!(c)) {TRAP;}
 #  endif
 #else
 #  define ASSERT(c)
@@ -24,15 +28,19 @@ typedef intptr_t Size;
 #define S(s) (Span){(Byte *)(s), SIZEOF(s)-1}
 #define Z(s) (Span){(Byte *)(s), SIZEOF(s)}
 
+typedef unsigned char  Byte;
+typedef intptr_t Size;
+
 typedef struct {
   Byte* ptr;
   Size  len;
 } Span;
 
-static bool
+#define FOREACHI(len) for(Size i = 0; i < len; ++i)
+bool
 valid(Span s) { return (s.ptr != NULL) && (s.len >= 0);}
 
-static Span
+Span
 head(Span s, Size size) {
   ASSERT(valid(s));
   ASSERT(size <= s.len);
@@ -41,7 +49,7 @@ head(Span s, Size size) {
   return (Span) { s.ptr, size }; 
 }
 
-static Span
+Span
 tail(Span s, Size size) {
   ASSERT(valid(s));
   ASSERT(size <= s.len);
@@ -50,7 +58,7 @@ tail(Span s, Size size) {
   return (Span) { &s.ptr[s.len - size], size }; 
 }
 
-static bool
+bool
 equal(Span s1, Span s2) {
   ASSERT(valid(s1));
   ASSERT(valid(s2));
@@ -64,20 +72,84 @@ equal(Span s1, Span s2) {
   }
 }
 
+Size
+spanstrlen(char* str) {
+  Size i = 0;
+  while(str[i]) { i++;}
+  return i;
+}
+
+bool
+spanisspace(char c) {
+  return c == ' ' || c == '\n' || c == '\t' || c == '\v' || c == '\f' || c == '\r';
+}
+
+Span
+trimstart(Span s) {
+  ASSERT(valid(s));
+
+  int i = 0;
+  for(; i < s.len; ++i) 
+    if(!spanisspace(s.ptr[i])) break;
+
+  return (Span) { &s.ptr[i], s.len - i };
+}
+
+Span
+trimend(Span s) {
+  ASSERT(valid(s));
+
+  int i = s.len - 1;
+  for(; i >= 0; --i) 
+    if(!spanisspace(s.ptr[i])) break;
+
+  return (Span) { s.ptr, i + 1 };
+}
+
+Span
+trim(Span s) {
+  return trimstart(trimend(s));
+}
+
+Span
+fromzstring(char* str) {
+  return (Span) { (Byte*) str, spanstrlen(str)};
+}
+
+typedef struct {
+  Span head;
+  Span tail;
+} SpanPair;
+
+SpanPair
+cut(Span s, Byte b) {
+  ASSERT(valid(s));
+  ASSERT(s.len != 0);
+
+  Size i = 0;
+  while((i < s.len) && (s.ptr[i] != b)) {
+    i++;
+  }
+  return (SpanPair) {
+    .head = (Span) { s.ptr, i},
+    .tail = (Span) { &s.ptr[i + 1], s.len - i - 1}
+  };
+}
+
 typedef struct {
   Span data;
   Size index;
 } Buffer;
 
-static Size
+Size
 avail(Buffer* buf) { return buf->data.len - buf->index; }
 
-static bool
+bool
 validb(Buffer* buf) {
   return valid(buf->data) && (0 <= buf->index) && (buf->index <= buf->data.len);
 }
 
-static Buffer
+Buffer
 bufinit(Byte* data, Size size) {
   ASSERT(data !=NULL);
   ASSERT(size > 0);
@@ -90,7 +162,7 @@ typedef struct {
   bool error;
 } SpanResult;
 
-static SpanResult
+SpanResult
 tryalloc(Buffer* buf, Size size) {
   ASSERT(validb(buf));
   ASSERT(0 < size);
@@ -108,14 +180,231 @@ tryalloc(Buffer* buf, Size size) {
   return (SpanResult) { .data = s, .error = false };
 }
 
-static Span
-alloc(Buffer* buf, Size size) {
-  SpanResult sr = tryalloc(buf, size);
-  if(sr.error) {
-    os_oom();
+void
+pushbyte(Buffer* b, Byte ch) {
+  ASSERT(validb(b));
+
+  b->data.ptr[b->index] = ch;
+  b->index++;
+}
+
+bool
+trypushbyte(Buffer* b, Byte ch) {
+  ASSERT(validb(b));
+
+  if(avail(b) <= 0) {
+    return false;
   }
 
-  return sr.data;
+  pushbyte(b, ch);
+  return true;
+}
+
+SpanResult
+copytobuffer(Span s, Buffer* b) {
+  ASSERT(validb(b));
+
+  if(avail(b) < s.len + 1) {
+    return (SpanResult) { {0}, true};
+  }
+  Span result = b->data;
+  result.len = s.len;
+
+  for(Size i = 0; i < s.len; i++) {
+    pushbyte(b, s.ptr[i]);
+  }    
+  return (SpanResult) { result, false };
 }
 
 
+
+#define CSVRESULTTYPES Value,  Newline,  End,  EEndInQuoted,  EFullBuffer
+#define CSVSTATETYPES  SValue, SNewline, SEnd, SEEndInQuoted, SEFullBuffer
+
+typedef enum { CSVRESULTTYPES } CsvTokenType;
+
+typedef struct {
+  CsvTokenType type;
+  Span rest;
+} CsvToken;
+
+typedef enum {
+  StartValue,
+  InsideQuoted,
+  InsideValue,
+  BlankAfterValue,
+  BlankAfterQuoted,
+  CSVSTATETYPES
+} _CsvState;
+
+#define EOCSV ((char)-1)
+
+#define PUSHCHAR                      \
+      if(!trypushbyte(value, ch)) {   \
+        return SEFullBuffer;          \
+      }
+
+// Skip initial whitespaces
+_CsvState
+startvalue(char ch, Buffer* value) {
+  switch(ch) {
+    case EOCSV:
+      return SEnd;
+    case '\n':
+      return SNewline;
+    case '"':
+      return InsideQuoted;
+    default:
+      PUSHCHAR;
+      return InsideValue;
+  }
+}
+
+_CsvState
+insidequoted(char ch, Buffer* value) {
+  switch(ch) {
+    case EOCSV:
+      return SEEndInQuoted;
+    case '"':
+      return BlankAfterQuoted;
+    default:
+      PUSHCHAR;
+      return InsideQuoted;
+  }
+}
+_CsvState
+insidevalue(char ch, Buffer* value) {
+  switch(ch) {
+    case EOCSV:
+    case ',':
+      return SValue;
+    default:
+      PUSHCHAR;
+      return InsideValue;
+  }
+}
+_CsvState
+blankafterquoted(char ch) {
+  switch(ch) {
+    case EOCSV:
+    case ',':
+      return SValue;
+    default:
+      return BlankAfterQuoted;
+  }
+}
+
+CsvToken
+nextcsvtoken(Span csv, Buffer* value) {
+
+  _CsvState state = StartValue;
+
+  Span rest = csv;
+
+  while(true) {
+    Span h = head(rest,1);
+    rest   = tail(rest, rest.len - 1);
+
+    char ch = (h.len == 0) ? EOCSV : (char)h.ptr[0];
+    
+    switch(state) {
+      case StartValue:
+        state = startvalue(ch, value);
+        break;
+      case InsideQuoted:
+        state = insidequoted(ch, value);
+        break;
+      case InsideValue:
+        state = insidevalue(ch, value);
+        break;
+      case BlankAfterQuoted:
+        state = blankafterquoted(ch);
+        break;
+      case SValue:
+        return (CsvToken) { Value, rest };
+        break;
+      case SNewline:
+        return (CsvToken) { Newline, rest };
+        break;
+      case SEnd:
+        return (CsvToken) { End, rest };
+        break;
+      case SEEndInQuoted:
+        return (CsvToken) { EEndInQuoted, rest };
+        break;
+      case SEFullBuffer:
+        return (CsvToken) { EFullBuffer, rest };
+        break;
+      default:
+        ASSERT(false);
+        break;
+    }
+  }
+}
+
+#define ADVANCE                                     \
+  if(rest.len == 0) {                               \
+    ch = EOCSV;                                     \
+    rest.ptr++;                                     \
+  } else {                                          \
+    ch = (char)rest.ptr[0];                         \
+    rest = tail(rest, rest.len - 1);                \
+  }                                                 \
+  switch(ch)
+
+#define FIRSTSTATE                                \
+  Span rest = csv;                                \
+  char ch = EOCSV;                                \
+  Byte* tokenPtr = csv.ptr;                       \
+  Byte* endPtr   = 0;                             \
+  ADVANCE
+
+#define STATE(name)                               \
+  name:                                           \
+  ADVANCE
+
+#define RET(tokentype)                                                                        \
+  if(tokentype == Newline) return (CsvResult) { Newline, (Span) {tokenPtr, 1}, rest };         \
+  if(endPtr) return (CsvResult) { tokentype, (Span) { tokenPtr, endPtr - tokenPtr - 1}, rest};           \
+  return (CsvResult) { tokentype, (Span) { tokenPtr, rest.ptr - tokenPtr - 1}, rest }
+
+typedef struct {
+  CsvTokenType type;
+  Span value;
+  Span rest;
+} CsvResult;
+
+CsvResult
+nextcsvtokeng(Span csv) {
+
+  FIRSTSTATE {
+    case EOCSV:
+      RET(End);
+    case '\n':
+      RET(Newline);
+    case ',':
+      RET(Value);
+    case '"':
+      tokenPtr++;
+      goto SQUOTED;
+    default:
+      goto SVALUE;
+  }
+  STATE(SQUOTED) {
+    case EOCSV:
+      RET(EEndInQuoted);
+    case '"':
+      endPtr = rest.ptr;
+      goto SVALUE; // the quote and blank after quote become part of value
+    default:
+      goto SQUOTED;
+  }
+  STATE(SVALUE) {
+    case EOCSV:
+    case ',':
+      RET(Value);
+    default:
+      goto SVALUE; 
+  }
+
+}

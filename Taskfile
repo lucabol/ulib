@@ -2,8 +2,8 @@
 
 set -e
 
-CFLAGS='-Wall -Wextra -Werror -Wpedantic -Ofast'
-DFLAGS='-Wall -Wextra -Werror  -Wpedantic -g3 -DDEBUG'
+CFLAGS='-Wall -Wextra -Werror -Wpedantic -Ofast -std=c11'
+DFLAGS='-Wall -Wextra -Werror  -Wpedantic -g3  -gdwarf-2 -DDEBUG -std=c11'
 FREE='-ffreestanding -nostdlib -Wno-unused-function'
 LDFLAGS=
 
@@ -88,6 +88,12 @@ function check {
   _build_test ${CC}
   debug/${CC}_test
   release/${CC}_test
+}
+
+function debug {
+  check
+  CC=musl-clang
+  gdb --tui debug/${CC}_test
 }
 function linter { # Runs cppcheck on all files
   cppcheck --suppressions-list=suppressions.txt --inline-suppr --addon=misra.json libu.c

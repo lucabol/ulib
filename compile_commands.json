@@ -1,0 +1,11 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "all.c"
+    ],
+    "directory": "/home/lucabol/dev/ulib",
+    "file": "/home/lucabol/dev/ulib/all.c"
+  }
+]
