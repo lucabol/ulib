@@ -1,3 +1,6 @@
+#ifndef ULIB
+#define ULIB
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdnoreturn.h>
@@ -392,6 +395,10 @@ nextcsvtokeng(Span csv) {
     case EOCSV:
       RETTOKEN(EEndInQuoted, startPtr, rest.ptr - startPtr - 1);
     case '"':
+      if(rest.len > 0 && rest.ptr[0] == '"') {
+        rest.ptr++;
+        goto SQUOTED; // Jump over double quotes
+      }
       endPtr = rest.ptr;
       goto SVALUE; // the quote and blank after quote become part of value
     default:
@@ -409,3 +416,5 @@ nextcsvtokeng(Span csv) {
   }
 
 }
+
+#endif

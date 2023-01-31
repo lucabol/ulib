@@ -13,6 +13,7 @@
 #endif
 
 #include "libu.c"
+#include "libu.c"
 #include "os_stdc.c"
 
 #define TASSERT(expr) do {                                          \
@@ -142,18 +143,11 @@ equaltest(char* strings[], int items, Span csv) {
     str = fromzstring(strings[i]);
 
     // Remove spaces and quotes from comparison string
-    int quotes = 0;
-    FOREACHI(str.len) {
-      quotes += str.ptr[i] == '"';
-    }
-    if(quotes == 2) {
-      str = trim(str);
-      str.ptr++;
-      str.len -= 2;
-    }
-    if(2 <= str.len && str.ptr[0] =='"' && str.ptr[str.len -1] == '"') {
-      str.ptr += 1;
-      str.len -= 2;
+    Span trimmed = trim(str);
+    if(trimmed.ptr[0] == '"' && trimmed.ptr[trimmed.len - 1] == '"') {
+      trimmed.ptr++;
+      trimmed.len -= 2;
+      str = trimmed;
     }
 
     if(!equal(r.value, str)) {
@@ -187,7 +181,9 @@ test_csv() {
   TESTCSV("", " 456", "", "78 9", " \n", " abc", "\n", "", "\n"); // empty members
 
   TESTCSV("\"123\"", "\"456\"", "\"789\"", "\n", "\"abc\""); // standard
-  TESTCSV("\"123\" ", "\"456\"  ", "\" 789\"", "\n", "\"abc\""); // standard
+  TESTCSV("\"123\" ", "\"456\"  ", "\" 789\"", "\n", "\"abc\""); // spaces in various places
+  TESTCSV("\"12,3\" ", "\",456,\"  ", "\" 789\"", "\n", "\"abc\""); // commas inside quotes
+  TESTCSV("\"12\"\",3\" ", "\"\"\",456,\"  ", "\" 789\"\"\"", "\"\"\n", "\"abc\"\"\""); // jumps over double quotes
 }
 int
 themain(int argc, char** argv) {
