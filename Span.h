@@ -99,7 +99,7 @@ SpanFromString(char* str) {
   return SPAN((Byte*) str, spanstrlen(str));
 }
 
-SpanPair
+inline SpanPair
 SpanCut(Span s, Byte b) {
   ASSERT(SpanValid(s));
   ASSERT(s.len != 0);

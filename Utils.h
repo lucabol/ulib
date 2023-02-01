@@ -3,20 +3,22 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdnoreturn.h>
 #include <stdlib.h>
 
 typedef unsigned char  Byte;
 typedef intptr_t Size;
 
 #ifdef _MSC_VER
-noreturn void __debugbreak(void);
+#  define NORETURN __declspec(noreturn)
 #  define TRAP __debugbreak()
+#elif __GNUC__
+#  define NORETURN __attribute__((noreturn))
+#  define TRAP __builtin_trap() //*(volatile int *)0 = 0
 #else
 // This should work only for __GCC__ but it is supported by TCC as well, using assignment to 0 pointer upsets cppcheck
 // and it is diffuclt to suppress because it is expanded at each point of call.
-noreturn void __builtin_trap(void);
-#  define TRAP __builtin_trap() //*(volatile int *)0 = 0
+#  define NORETURN
+#  define TRAP *(volatile int *)0 = 0
 #endif
 
 #ifdef DEBUG

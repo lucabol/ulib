@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include <stdnoreturn.h>
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
@@ -11,12 +10,12 @@
 
 #include "Utils.h"
 
-inline noreturn void
+inline NORETURN void
 OsTrap(void) {
   abort();
 }
 
-inline noreturn void
+inline NORETURN void
 OsOom(void) {
   abort();
 }
@@ -46,8 +45,8 @@ OsSlurp(char* path, size_t maxsize, unsigned char buf[]) {
 #ifdef OS_STDC_IMPL
 #define OS_STDC_IMPL
 
-noreturn void OsTrap(void);
-noreturn void OsOom(void);
+NORETURN void OsTrap(void);
+NORETURN void OsOom(void);
 bool OsSlurp(char* path, size_t maxsize, unsigned char buf[]);
 
 int themain(int argc, char** argv);
