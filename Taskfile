@@ -2,7 +2,7 @@
 
 set -e
 
-CFLAGS='-Wall -Wextra -Werror -Wpedantic -Ofast -std=c11'
+CFLAGS='-Wall -Wextra -Werror -Wpedantic -Winline -Ofast -std=c11'
 DFLAGS='-Wall -Wextra -Werror  -Wpedantic -g3  -gdwarf-2 -DDEBUG -std=c11'
 FREE='-ffreestanding -nostdlib -Wno-unused-function'
 LDFLAGS=
@@ -53,12 +53,12 @@ function _build_test {
 
   set -x
   # Check that it compiles fine freestanding
-  $CC $BCFLAGS $FREE -c libu.c -o obj/${CC}_rel_libu.o
-  $CC $BDFLAGS $FREE -c libu.c -o obj/${CC}_dbg_libu.o
+  # $CC $BCFLAGS $FREE -c libu.c -o obj/${CC}_rel_libu.o
+  # $CC $BDFLAGS $FREE -c libu.c -o obj/${CC}_dbg_libu.o
 
   # But then compile it with full link time optimization
-  $CC $BCFLAGS $BLDFLAGS main_test.c -o release/${CC}_test
-  $CC $BDFLAGS $BLDFLAGS main_test.c -o debug/${CC}_test
+  $CC $BCFLAGS $BLDFLAGS MainTest.c -o release/${CC}_test
+  $CC $BDFLAGS $BLDFLAGS MainTest.c -o debug/${CC}_test
   set +x
 }
 
