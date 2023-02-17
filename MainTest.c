@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+// This has to come first as it changes the ASSERT semantic in the other include files
 #include "Test.h"
 
 #define BUFFER_IMPL
@@ -16,6 +17,11 @@
 #define CSV_IMPL
 #include "Csv.h"
 
+#ifndef __WINDOWS__
+#define DATA "/home/lucabol/dev/ulib/data/"
+#else
+#error "Need to define data directory for Windows"
+#endif
 
 TEST_INIT;
 
@@ -176,7 +182,15 @@ test_csv() {
 
 void
 test_slurp() {
+  Byte data[100];
+  Buffer b1 = BufferInit(data, 100);
 
+  SpanResult sr = OsSlurp(DATA "slurp1.txt", 100, &b1);
+  TASSERT(!sr.error);
+  
+  sr = OsSlurp(DATA "slurp2.txt", 100, &b1);
+  TASSERT(!sr.error);
+  TASSERT(SpanEqual(sr.data, S("0123456789\n")));
 }
 
 int

@@ -44,6 +44,15 @@ BufferTryAlloc(Buffer* buf, Size size) {
 }
 
 inline void
+BufferDealloc(Buffer* buf, Size size) {
+  ASSERT(BufferValid(buf));
+  ASSERT(size <= buf->index);
+
+  size = size <= buf->index ? size : buf->index;
+  buf->index -= size;
+}
+
+inline void
 BufferPushByte(Buffer* b, Byte ch) {
   ASSERT(BufferValid(b));
 
@@ -88,6 +97,7 @@ bool BufferValid(Buffer* buf);
 Buffer BufferInit(Byte* data, Size size);
 
 SpanResult BufferTryAlloc(Buffer* buf, Size size);
+void BufferDealloc(Buffer* buf, Size size);
 void BufferPushByte(Buffer* b, Byte ch);
 
 bool TryBufferPushByte(Buffer* b, Byte ch);
