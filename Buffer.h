@@ -9,11 +9,6 @@ typedef struct {
   Size index;
 } Buffer;
 
-typedef struct {
-  Span data;
-  bool error;
-} SpanResult;
-
 inline Size
 BufferAvail(Buffer* buf) { return buf->data.len - buf->index; }
 
@@ -36,7 +31,7 @@ BufferTryAlloc(Buffer* buf, Size size) {
   ASSERT(0 < size);
 
   if(BufferAvail(buf) < size) {
-    return (SpanResult) { .error = true};
+    return SPANERR("Buffer too small for the allocation");
   }
 
   Span s = SPAN(&buf->data.ptr[buf->index], size);
@@ -45,7 +40,7 @@ BufferTryAlloc(Buffer* buf, Size size) {
   buf->index += size; 
   ASSERT(BufferValid(buf));
 
-  return (SpanResult) { .data = s, .error = false };
+  return SPANOK(s.ptr, s.len);
 }
 
 inline void
@@ -73,7 +68,7 @@ BufferCopy(Span s, Buffer* b) {
   ASSERT(BufferValid(b));
 
   if(BufferAvail(b) < s.len + 1) {
-    return (SpanResult) { {0}, true};
+    return SPANERR("Buffer too small for the copy");
   }
   Span result = b->data;
   result.len = s.len;
@@ -81,7 +76,7 @@ BufferCopy(Span s, Buffer* b) {
   for(Size i = 0; i < s.len; i++) {
     BufferPushByte(b, s.ptr[i]);
   }    
-  return (SpanResult) { result, false };
+  return SPANOK(result.ptr, result.len);
 }
 
 #endif // Header file

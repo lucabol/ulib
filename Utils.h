@@ -8,6 +8,8 @@
 typedef unsigned char  Byte;
 typedef intptr_t Size;
 
+#define FOREACHI(len) for(Size i = 0; i < len; ++i)
+
 #ifdef _MSC_VER
 #  define NORETURN __declspec(noreturn)
 #  define TRAP __debugbreak()

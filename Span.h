@@ -9,12 +9,18 @@ typedef struct {
 } Span;
 
 typedef struct {
+  Span data;
+  const char* error;
+} SpanResult;
+
+typedef struct {
   Span head;
   Span tail;
 } SpanPair;
 
-#define FOREACHI(len) for(Size i = 0; i < len; ++i)
 #define SPAN(ptr,len) (Span) {(ptr), (len)}
+#define SPANERR(msg) (SpanResult) {SPAN(0,0), (msg)}
+#define SPANOK(ptr, len) (SpanResult) {SPAN((ptr),(len)), NULL}
 
 inline bool
 SpanValid(Span s) { return (s.ptr != NULL) && (s.len >= 0);}

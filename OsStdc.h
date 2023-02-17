@@ -9,6 +9,8 @@
 #include <ctype.h>
 
 #include "Utils.h"
+#include "Span.h"
+#include "Buffer.h"
 
 inline NORETURN void
 OsTrap(void) {
@@ -20,24 +22,27 @@ OsOom(void) {
   abort();
 }
 
-inline bool
-OsSlurp(char* path, size_t maxsize, unsigned char buf[]) {
+inline SpanResult
+OsSlurp(char* path, Size maxsize, Buffer* buf) {
 
     assert(strlen(path) > 0);
 
     FILE *f = fopen((char *)path, "rb");
     if (!f) {
-        return false;
+      return SPANERR("Can't open file");
+    }
+    SpanResult s = BufferTryAlloc(buf, maxsize);
+    if(s.error) {
+      return SPANERR("Can't allocate buffer this big");
     }
 
-    size_t len = (size_t)fread(buf, 1, maxsize, f);
-    (void)len;
-    if(ferror(f)) return false;
-    if(!feof(f)) return false;
+    Size len = fread(s.data.ptr, 1, maxsize, f);
+    if(ferror(f)) return SPANERR("Error reading from file");
+    if(!feof(f)) return SPANERR("File partially read. You may need a bigger bugger.");
 
     fclose(f);
 
-    return true;
+    return SPANOK(s.data.ptr, len);
 }
 
 #endif // Header file
@@ -47,7 +52,7 @@ OsSlurp(char* path, size_t maxsize, unsigned char buf[]) {
 
 NORETURN void OsTrap(void);
 NORETURN void OsOom(void);
-bool OsSlurp(char* path, size_t maxsize, unsigned char buf[]);
+inline SpanResult OsSlurp(char* path, Size maxsize, Buffer* buf);
 
 int themain(int argc, char** argv);
 int main(int argc, char** argv) { return themain(argc, argv); }

@@ -81,7 +81,6 @@ test_span() {
   TTRIM("  a ","a");
   TTRIM("a  ","a");
   TTRIM("  a ","a");
-
 }
 
 void
@@ -175,6 +174,11 @@ test_csv() {
   TESTCSV("\"12\"\",3\" ", "\"\"\",456,\"  ", "\" 789\"\"\"", " \"\"\n", "\"abc\"\"\""); // jumps over double quotes
 }
 
+void
+test_slurp() {
+
+}
+
 int
 themain(int argc, char** argv) {
   (void)argc;
@@ -183,8 +187,8 @@ themain(int argc, char** argv) {
   TEST(span);
   TEST(buffer);
   TEST(csv);
+  TEST(slurp);
 
   TEST_REPORT;
   return ALLPASSED ? EXIT_SUCCESS : EXIT_FAILURE;
 }
-
