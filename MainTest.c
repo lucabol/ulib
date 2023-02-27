@@ -187,10 +187,14 @@ test_slurp() {
 
   SpanResult sr = OsSlurp(DATA "slurp1.txt", 100, &b1);
   TASSERT(!sr.error);
+  TASSERT(BufferAvail(&b1) == 100);
   
   sr = OsSlurp(DATA "slurp2.txt", 100, &b1);
   TASSERT(!sr.error);
   TASSERT(SpanEqual(sr.data, S("0123456789\n")));
+
+  sr = OsSlurp(DATA "errorslurp.txt", 100, &b1);
+  TASSERT(sr.error);
 }
 
 int

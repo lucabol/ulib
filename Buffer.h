@@ -46,7 +46,6 @@ BufferTryAlloc(Buffer* buf, Size size) {
 inline void
 BufferDealloc(Buffer* buf, Size size) {
   ASSERT(BufferValid(buf));
-  ASSERT(size <= buf->index);
 
   size = size <= buf->index ? size : buf->index;
   buf->index -= size;
