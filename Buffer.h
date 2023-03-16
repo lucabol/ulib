@@ -78,13 +78,17 @@ BufferCopy(Span s, Buffer* b) {
   if(BufferAvail(b) < s.len + 1) {
     return SPANERR("Buffer too small for the copy");
   }
-  Span result = b->data;
-  result.len = s.len;
+  Span result = SPAN(&(b->data.ptr[b->index]), s.len);
 
   for(Size i = 0; i < s.len; i++) {
     BufferPushByte(b, s.ptr[i]);
   }    
   return SPANOK(result.ptr, result.len);
+}
+
+inline Span
+BufferToSpan(Buffer* b) {
+  return SPAN(b->data.ptr, b->index);
 }
 
 #endif // Header file
@@ -101,6 +105,7 @@ void BufferPushByte(Buffer* b, Byte ch);
 
 bool TryBufferPushByte(Buffer* b, Byte ch);
 SpanResult BufferCopy(Span s, Buffer* b);
+Span BufferToSpan(Buffer* b); 
 
 #undef BUFFER_IMPL
 #endif

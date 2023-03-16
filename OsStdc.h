@@ -77,5 +77,28 @@ OsSlurp(char* path, Size maxsize, Buffer* buf) {
       return SPANOK(s.data.ptr, len);
 }
 
+char*
+OsFlash(char* path, Span s) {
+
+  FILE *f = fopen(path, "w");
+  char* err = NULL;
+
+  if (!f) {
+    err = "Can't open file";
+    goto exit;
+  }
+  
+  int written = fwrite(s.ptr, 1, s.len, f);
+  (void)written;
+
+  if(ferror(f)) {
+    err = "Error writing the file";
+    goto exit;
+  } 
+
+exit:
+  if(f) fclose(f);
+  return err;
+}
 #undef OS_STDC_IMPL
 #endif

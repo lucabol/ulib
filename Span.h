@@ -43,6 +43,14 @@ SpanTail(Span s, Size size) {
   return SPAN(&s.ptr[s.len - size], size); 
 }
 
+inline Span
+SpanSub(Span s, Size startIncl, Size endExcl) {
+  ASSERT(SpanValid(s));
+  ASSERT(0 <= startIncl && startIncl < s.len);
+  ASSERT(0 <= endExcl && endExcl <= s.len);
+  return SPAN(&s.ptr[startIncl], endExcl - startIncl);
+}
+
 inline bool
 SpanEqual(Span s1, Span s2) {
   ASSERT(SpanValid(s1));
@@ -72,7 +80,7 @@ spanstrlen(char* str) {
 
 // TODO: wonder if the other spaces are needed.
 //#define ISSPACE(c)  ((c) == ' ' || (c) == '\n' || (c) == '\t' || (c) == '\v' || (c) == '\f' || (c) == '\r')
-#define ISSPACE(c)  ((c) == ' ')
+#define ISSPACE(c)  ((c) == ' ' || (c) == '\r')
 
 
 inline Span
@@ -119,6 +127,15 @@ SpanCut(Span s, Byte b) {
   };
 }
 
+inline bool
+SpanContains(Span s, Byte b) {
+  ASSERT(SpanValid(s));
+  FOREACHI(s.len) {
+    if(s.ptr[i] == b) return true;
+  }
+  return false;
+}
+
 #endif // Header file
 
 #ifdef SPAN_IMPL
@@ -131,6 +148,8 @@ Span SpanTrimStart(Span s);
 Span SpanTrimEnd(Span s);
 Span SpanFromString(char* str);
 SpanPair SpanCut(Span s, Byte b);
+Span SpanSub(Span s, Size startIncl, Size endExcl);
+bool  SpanContains(Span s, Byte b);
 
 #undef SPAN_IMPL
 #endif
