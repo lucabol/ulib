@@ -154,6 +154,24 @@ Span SpanFromUlong(unsigned long value) {
   return SPAN(&buffer[index], len - index);
 }
 
+inline unsigned long
+SpanToUlong(Span s) {
+  ASSERT(SpanValid(s));
+
+  const Span digits = S("0123456789");
+  const unsigned long base = 10;
+  unsigned long acc = 0;
+
+  for(Size i = 0; i < s.len; i++) {
+    Byte c = s.ptr[i];
+    if(!SpanContains(digits, c)) break;
+
+    c -= '0';
+    acc *= base;
+    acc += c;
+  }
+  return acc;
+}
 #endif // Header file
 
 #ifdef SPAN_IMPL
@@ -168,7 +186,9 @@ Span SpanFromString(char* str);
 SpanPair SpanCut(Span s, Byte b);
 Span SpanSub(Span s, Size startIncl, Size endExcl);
 bool  SpanContains(Span s, Byte b);
+
 Span SpanFromUlong(unsigned long value);
+unsigned long SpanToUlong(Span s);
 
 #undef SPAN_IMPL
 #endif

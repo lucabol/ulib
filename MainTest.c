@@ -88,9 +88,12 @@ test_span() {
   TTRIM("a  ","a");
   TTRIM("  a ","a");
 
-  #define TUL(n) assert(SpanEqual(S(#n),SpanFromUlong(n)))
+  #define TUL(n) assert(SpanEqual(S(#n), SpanFromUlong(n)))
   TUL(0);
   TUL(345000);
+  #define TSL(n) assert(n == SpanToUlong(S(#n)))
+  TSL(0);
+  TSL(34500);
 }
 
 void
