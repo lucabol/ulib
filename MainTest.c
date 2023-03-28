@@ -87,6 +87,10 @@ test_span() {
   TTRIM("  a ","a");
   TTRIM("a  ","a");
   TTRIM("  a ","a");
+
+  #define TUL(n) assert(SpanEqual(S(#n),SpanFromUlong(n)))
+  TUL(0);
+  TUL(345000);
 }
 
 void
@@ -107,6 +111,7 @@ test_buffer() {
 
   b1.index = 0;
   TFAILASSERT(BufferTryAlloc(&b1,0));
+
 }
 
 void

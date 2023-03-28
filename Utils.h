@@ -15,7 +15,7 @@ typedef intptr_t Size;
 #  define TRAP __debugbreak()
 #elif __GNUC__
 #  define NORETURN __attribute__((noreturn))
-#  define TRAP __builtin_trap()
+#  define TRAP __builtin_trap() //*(volatile int *)0 = 0
 #else
 // This should work only for __GCC__ but it is supported by TCC as well, using assignment to 0 pointer upsets cppcheck
 // and it is diffuclt to suppress because it is expanded at each point of call.

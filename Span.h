@@ -20,7 +20,9 @@ typedef struct {
 
 #define SPAN(ptr,len) (Span) {(ptr), (len)}
 #define SPANERR(msg) (SpanResult) {SPAN(0,0), (msg)}
+#define SPANRESULT(span) (SpanResult) {span, NULL}
 #define SPANOK(ptr, len) (SpanResult) {SPAN((ptr),(len)), NULL}
+#define SPAN0 SPAN(0,0)
 
 inline bool
 SpanValid(Span s) { return (s.ptr != NULL) && (s.len >= 0);}
@@ -136,6 +138,22 @@ SpanContains(Span s, Byte b) {
   return false;
 }
 
+static inline
+Span SpanFromUlong(unsigned long value) {
+  int radix = 10; // just base 10 to max optimize
+  static Byte buffer[32];
+
+  Size index = sizeof(buffer);
+  Size len   = index;
+
+  do {
+    buffer[--index] = '0' + (value % radix);
+    value /= radix;
+  } while (value != 0);
+
+  return SPAN(&buffer[index], len - index);
+}
+
 #endif // Header file
 
 #ifdef SPAN_IMPL
@@ -150,6 +168,7 @@ Span SpanFromString(char* str);
 SpanPair SpanCut(Span s, Byte b);
 Span SpanSub(Span s, Size startIncl, Size endExcl);
 bool  SpanContains(Span s, Byte b);
+Span SpanFromUlong(unsigned long value);
 
 #undef SPAN_IMPL
 #endif
