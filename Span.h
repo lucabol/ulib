@@ -129,6 +129,19 @@ SpanCut(Span s, Byte b) {
   };
 }
 
+inline SpanPair
+SpanRCut(Span s, Byte b) {
+  ASSERT(SpanValid(s));
+  ASSERT(s.len != 0);
+
+  for(Size i = s.len - 1; i >= 0; i--) {
+    if(s.ptr[i] == b)
+      return (SpanPair) {SPAN(s.ptr, i), SPAN(&s.ptr[i + 1], s.len - i - 1)
+      };
+  }
+  return (SpanPair) {s, SPAN(s.ptr, 0) };
+}
+
 inline bool
 SpanContains(Span s, Byte b) {
   ASSERT(SpanValid(s));
@@ -172,6 +185,15 @@ SpanToUlong(Span s) {
   }
   return acc;
 }
+
+static inline Byte*
+SpanTo1KTempString(Span s) {
+  static Byte temp[1024];
+  for(Size i = 0; i < s.len; i++)
+    temp[i] = s.ptr[i];
+  temp[s.len] = 0;
+  return temp;
+}
 #endif // Header file
 
 #ifdef SPAN_IMPL
@@ -184,11 +206,13 @@ Span SpanTrimStart(Span s);
 Span SpanTrimEnd(Span s);
 Span SpanFromString(char* str);
 SpanPair SpanCut(Span s, Byte b);
+SpanPair SpanRCut(Span s, Byte b);
 Span SpanSub(Span s, Size startIncl, Size endExcl);
 bool  SpanContains(Span s, Byte b);
 
 Span SpanFromUlong(unsigned long value);
 unsigned long SpanToUlong(Span s);
+Byte* SpanTo1KTempString(Span s);
 
 #undef SPAN_IMPL
 #endif
