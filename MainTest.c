@@ -94,6 +94,13 @@ test_span() {
   #define TSL(n) assert(n == SpanToUlong(S(#n)))
   TSL(0);
   TSL(34500);
+
+  #define TEX(p,e) assert(SpanEqual(S(#e),SpanExtractFileName('/',S(#p))))
+  TEX(/dev/foo.x,foo);
+  TEX(/dev/foo,foo);
+  TEX(/foo,foo);
+  TEX(foo.ks,foo);
+  TEX(foo,foo);
 }
 
 void

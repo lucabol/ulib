@@ -38,4 +38,7 @@ typedef intptr_t Size;
 #define S(s) (Span){(Byte *)(s), SIZEOF(s)-1}
 #define Z(s) (Span){(Byte *)(s), SIZEOF(s)}
 
+#define SM do {
+#define EM } while(0)
+
 #endif

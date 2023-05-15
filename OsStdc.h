@@ -12,14 +12,25 @@
 #include "Span.h"
 #include "Buffer.h"
 
-inline NORETURN void
+static inline NORETURN void
 OsTrap(void) {
   abort();
 }
 
-inline NORETURN void
+static inline NORETURN void
 OsOom(void) {
   abort();
+}
+
+static inline Size
+OsPrintSpan(Span s) {
+  return fwrite(s.ptr, 1, s.len, stdout);
+}
+
+static inline Size
+OsPrintBuffer(Buffer* b) {
+  Span s = BufferToSpan(b);
+  return OsPrintSpan(s);
 }
 
 SpanResult OsSlurp(char* path, Size maxsize, Buffer* buf);
@@ -78,7 +89,7 @@ OsSlurp(char* path, Size maxsize, Buffer* buf) {
 }
 
 char*
-OsFlash(char* path, Span s) {
+OsFlush(char* path, Span s) {
 
   FILE *f = fopen(path, "w");
   char* err = NULL;
@@ -88,7 +99,7 @@ OsFlash(char* path, Span s) {
     goto exit;
   }
   
-  int written = fwrite(s.ptr, 1, s.len, f);
+  size_t written = fwrite(s.ptr, 1, s.len, f);
   (void)written;
 
   if(ferror(f)) {

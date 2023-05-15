@@ -2,7 +2,7 @@
 
 set -e
 
-CFLAGS='-Wall -Wextra -Werror -Wpedantic -Winline -Ofast -std=c99'
+CFLAGS='-Wall -Wextra -Werror -Wpedantic -Ofast -std=c99'
 DFLAGS='-Wall -Wextra -Werror  -Wpedantic -g3  -gdwarf-2 -DDEBUG -std=c99'
 FREE='-ffreestanding -nostdlib -Wno-unused-function'
 LDFLAGS=

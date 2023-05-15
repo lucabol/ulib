@@ -73,7 +73,7 @@ SpanEqual(Span s1, Span s2) {
 }
 
 // TODO: call builtins if available for perf
-Size
+inline Size
 spanstrlen(char* str) {
   Size i = 0;
   while(str[i]) { i++;}
@@ -99,7 +99,7 @@ inline Span
 SpanTrimEnd(Span s) {
   ASSERT(SpanValid(s));
 
-  int i = s.len - 1;
+  Size i = s.len - 1;
   for(; i >= 0; --i) 
     if(!ISSPACE(s.ptr[i])) break;
 
@@ -139,7 +139,7 @@ SpanRCut(Span s, Byte b) {
       return (SpanPair) {SPAN(s.ptr, i), SPAN(&s.ptr[i + 1], s.len - i - 1)
       };
   }
-  return (SpanPair) {s, SPAN(s.ptr, 0) };
+  return (SpanPair) {SPAN(s.ptr, 0), s };
 }
 
 inline bool
@@ -151,22 +151,27 @@ SpanContains(Span s, Byte b) {
   return false;
 }
 
+#define SpanFromUlong_(_name, _value) Span _name; SM \
+  int radix = 10; \
+  static Byte buffer[32]; \
+  Size index = sizeof(buffer); \
+  Size len   = index; \
+  do { \
+    buffer[--index] = (Byte)('0' + (_value % radix)); \
+    _value /= radix; \
+  } while (_value != 0); \
+  _name = SPAN(&buffer[index], len - index); EM
+
 static inline
 Span SpanFromUlong(unsigned long value) {
-  int radix = 10; // just base 10 to max optimize
-  static Byte buffer[32];
-
-  Size index = sizeof(buffer);
-  Size len   = index;
-
-  do {
-    buffer[--index] = '0' + (value % radix);
-    value /= radix;
-  } while (value != 0);
-
-  return SPAN(&buffer[index], len - index);
+  SpanFromUlong_(ret, value);
+  return ret;
 }
-
+static inline
+Span SpanFromUlong1(unsigned long value) {
+  SpanFromUlong_(ret, value);
+  return ret;
+}
 inline unsigned long
 SpanToUlong(Span s) {
   ASSERT(SpanValid(s));
@@ -194,6 +199,11 @@ SpanTo1KTempString(Span s) {
   temp[s.len] = 0;
   return temp;
 }
+
+inline Span
+SpanExtractFileName(Byte sep, Span path) {
+  return SpanCut(SpanRCut(path, sep).tail,'.').head;
+}
 #endif // Header file
 
 #ifdef SPAN_IMPL
@@ -211,8 +221,11 @@ Span SpanSub(Span s, Size startIncl, Size endExcl);
 bool  SpanContains(Span s, Byte b);
 
 Span SpanFromUlong(unsigned long value);
+Span SpanFromUlong1(unsigned long value);
 unsigned long SpanToUlong(Span s);
 Byte* SpanTo1KTempString(Span s);
+Span SpanExtractFileName(Byte sep, Span path);
 
+Size spanstrlen(char* str);
 #undef SPAN_IMPL
 #endif
