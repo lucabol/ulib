@@ -17,6 +17,8 @@
 #define CSV_IMPL
 #include "Csv.h"
 
+#include "DodStruct.h"
+
 #ifndef __WINDOWS__
 #define DATA "/home/lucabol/dev/ulib/data/"
 #else
@@ -124,6 +126,28 @@ test_buffer() {
 
 }
 
+void test_struct() {
+  Struct1(P1,100, int,Count);
+  P1Count[P1Idx] = 1;
+  TASSERT(P1Count[P1Idx] == 1);
+
+  Struct2(P2,200, int,Count, float, FVal);(void)P2FVal;
+  P2Count[P2Idx] = 2;
+  TASSERT(P2Count[P2Idx] == 2.0);
+
+  Struct3(P3,200, int,Count, float, FVal,int,KVal);(void)P3FVal;(void)P3KVal;
+  P3Count[P3Idx] = 2;
+  TASSERT(P3Count[P2Idx] == 2.0);
+
+  Struct4(P4,200, int,Count, float, FVal,int,KVal,int,CVal);(void)P4FVal;(void)P4KVal;(void)P4CVal;
+  P4Count[P4Idx] = 2;
+  TASSERT(P4Count[P2Idx] == 2.0);
+
+  Struct5(P5,200, int,Count, float, FVal,int,KVal,int,CVal,int,GVal);(void)P5FVal;(void)P5KVal;(void)P5CVal;(void)P5GVal;
+  P5Count[P5Idx] = 2;
+  TASSERT(P5Count[P2Idx] == 2.0);
+}
+
 void
 tocsvstring(char* strings[], int items, char dest[], Size size) {
   memset(dest, 0, size); 
@@ -221,6 +245,7 @@ themain(int argc, char** argv) {
   TEST(buffer);
   TEST(csv);
   TEST(slurp);
+  TEST(struct);
 
   TEST_REPORT;
   return ALLPASSED ? EXIT_SUCCESS : EXIT_FAILURE;

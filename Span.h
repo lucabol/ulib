@@ -204,6 +204,18 @@ inline Span
 SpanExtractFileName(Byte sep, Span path) {
   return SpanCut(SpanRCut(path, sep).tail,'.').head;
 }
+static inline Span
+Span1KToUpper(Span s) {
+  const char OFFSET = 'a' - 'A';
+  static Byte temp[1024];
+
+  for(Size i = 0; i < s.len; i++) {
+    char ch = s.ptr[i];
+    temp[i] = (Byte)(ch >= 'a' && ch <= 'z' ? ch - OFFSET : ch) ;
+  }
+  return SPAN(temp, s.len);
+}
+
 #endif // Header file
 
 #ifdef SPAN_IMPL
@@ -227,5 +239,7 @@ Byte* SpanTo1KTempString(Span s);
 Span SpanExtractFileName(Byte sep, Span path);
 
 Size spanstrlen(char* str);
+Span Span1KToUpper(Span s);
+
 #undef SPAN_IMPL
 #endif
