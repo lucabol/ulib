@@ -22,7 +22,7 @@
 #ifndef __WINDOWS__
 #define DATA "/home/lucabol/dev/ulib/data/"
 #else
-#error "Need to define data directory for Windows"
+#define DATA "c:\Users\lucabol\dev\ulibtest\data"
 #endif
 
 TEST_INIT;
