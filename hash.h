@@ -1,7 +1,7 @@
 #ifndef HASH_DEF_INCLUDE
 #define HASH_DEF_INCLUDE
 
-#include "Utils.h"
+#include "base.h"
 
 inline int32_t
 HashLookup(uint64_t hash, int exp, int32_t idx) {

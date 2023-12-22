@@ -7,7 +7,7 @@ DFLAGS='-Wall -Wextra -Werror  -Wpedantic -g3  -gdwarf-2 -DDEBUG -std=c99'
 FREE='-ffreestanding -nostdlib -Wno-unused-function'
 LDFLAGS=
 
-CCS='gcc musl-gcc clang musl-clang mingw-gcc tcc'
+CCS='gcc musl-gcc clang musl-clang tcc mingw-gcc'
 
 function clean {    # Clean things
   rm -rf obj
@@ -39,6 +39,11 @@ function _build_test {
         BCFLAGS="$CFLAGS -static"
         BDFLAGS="$DFLAGS -static"
         ;;
+      mingw-clang)
+        BLDFLAGS=-flto
+        BCFLAGS="$CFLAGS -static -target x86_64-w64-windows-gnu"
+        BDFLAGS="$DFLAGS -static -target x86_64-w64-windows-gnu"
+        ;;
       mingw-gcc)
         BLDFLAGS=-fwhole-program
         BCFLAGS="$CFLAGS -static"
@@ -53,12 +58,12 @@ function _build_test {
 
   set -x
   # Check that it compiles fine freestanding
-  $CC $BCFLAGS $FREE -c NoStdcTest.c -o obj/${CC}-nostdlib.o
-  $CC $BDFLAGS $FREE -c NoStdcTest.c -o obj/${CC}-nostdlib.o
+  $CC $BCFLAGS $FREE -c nostdctest.c -o obj/${CC}-nostdlib.o
+  $CC $BDFLAGS $FREE -c nostdctest.c -o obj/${CC}-nostdlib.o
 
   # But then compile it with full link time optimization
-  $CC $BCFLAGS $BLDFLAGS MainTest.c -o release/${CC}_test
-  $CC $BDFLAGS $BLDFLAGS MainTest.c -o debug/${CC}_test
+  $CC $BCFLAGS $BLDFLAGS maintest.c -o release/${CC}_test
+  $CC $BDFLAGS $BLDFLAGS maintest.c -o debug/${CC}_test
   set +x
 }
 
@@ -78,8 +83,11 @@ function checkall {    # Runs the tests
   buildall
 
   for exe in debug/* release/*;do 
-    echo $exe
-    $exe
+    if [[ $exe != */mingw* ]]
+    then
+      echo $exe
+      $exe
+    fi
   done
 }
 

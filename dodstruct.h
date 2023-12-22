@@ -1,7 +1,7 @@
 #ifndef DODSTRUCT_H
 #define DODSTRUCT_H
 
-#include "Utils.h"
+#include "base.h"
 
 #ifndef SIDXT
 #define SIDXT Size

@@ -1,8 +1,8 @@
 #ifndef BUFFER_INCLUDE
 #define BUFFER_INCLUDE
 
-#include "Utils.h"
-#include "Span.h"
+#include "base.h"
+#include "span.h"
 
 typedef struct {
   Span data;
@@ -19,33 +19,33 @@ BufferValid(Buffer* buf) {
 
 inline Buffer
 BufferInit(Byte* data, Size size) {
-  ASSERT(data !=NULL);
-  ASSERT(size > 0);
+  assume(data !=NULL);
+  assume(size > 0);
 
   return (Buffer) { SPAN(data, size), 0};
 }
 
 inline SpanResult
 BufferTryAlloc(Buffer* buf, Size size) {
-  ASSERT(BufferValid(buf));
-  ASSERT(0 < size);
+  assume(BufferValid(buf));
+  assume(0 < size);
 
   if(BufferAvail(buf) < size) {
     return SPANERR("Buffer too small for the allocation");
   }
 
   Span s = SPAN(&buf->data.ptr[buf->index], size);
-  ASSERT(SpanValid(s));
+  assume(SpanValid(s));
 
   buf->index += size; 
-  ASSERT(BufferValid(buf));
+  assume(BufferValid(buf));
 
   return SPANOK(s.ptr, s.len);
 }
 
 inline void
 BufferDealloc(Buffer* buf, Size size) {
-  ASSERT(BufferValid(buf));
+  assume(BufferValid(buf));
 
   size = size <= buf->index ? size : buf->index;
   buf->index -= size;
@@ -53,7 +53,7 @@ BufferDealloc(Buffer* buf, Size size) {
 
 inline void
 BufferPushByte(Buffer* b, Byte ch) {
-  ASSERT(BufferValid(b));
+  assume(BufferValid(b));
 
   b->data.ptr[b->index] = ch;
   b->index++;
@@ -61,7 +61,7 @@ BufferPushByte(Buffer* b, Byte ch) {
 
 inline bool
 TryBufferPushByte(Buffer* b, Byte ch) {
-  ASSERT(BufferValid(b));
+  assume(BufferValid(b));
 
   if(BufferAvail(b) <= 0) {
     return false;
@@ -73,7 +73,7 @@ TryBufferPushByte(Buffer* b, Byte ch) {
 
 inline SpanResult
 BufferCopy(Span s, Buffer* b) {
-  ASSERT(BufferValid(b));
+  assume(BufferValid(b));
 
   if(BufferAvail(b) < s.len + 1) {
     return SPANERR("Buffer too small for the copy");
@@ -88,7 +88,7 @@ BufferCopy(Span s, Buffer* b) {
 
 inline SpanResult
 BufferMCopyA(Byte sep, Span ss[], Buffer* b) {
-  ASSERT(BufferValid(b));
+  assume(BufferValid(b));
 
   Byte* start = &(b->data.ptr[b->index]);
   Size len = 0;
@@ -108,7 +108,7 @@ BufferMCopyA(Byte sep, Span ss[], Buffer* b) {
 
 inline SpanResult
 BufferSCopyA(Byte sep, char* ss[], Buffer* b) {
-  ASSERT(BufferValid(b));
+  assume(BufferValid(b));
 
   Byte* start = &(b->data.ptr[b->index]);
   Size len = 0;

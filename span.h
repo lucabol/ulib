@@ -1,7 +1,7 @@
 #ifndef SPAN_DEF_INCLUDE
 #define SPAN_DEF_INCLUDE
 
-#include "Utils.h"
+#include "base.h"
 
 typedef struct {
   Byte* ptr;
@@ -24,39 +24,42 @@ typedef struct {
 #define SPANOK(ptr, len) (SpanResult) {SPAN((ptr),(len)), NULL}
 #define SPAN0 SPAN(0,0)
 
+#define S(s) (Span){(Byte *)(s), (Size)sizeof(s)-1}
+#define Z(s) (Span){(Byte *)(s), (Size)sizeof(s)}
+
 inline bool
 SpanValid(Span s) { return (s.ptr != NULL) && (s.len >= 0);}
 
 inline Span
 SpanHead(Span s, Size size) {
-  ASSERT(SpanValid(s));
-  ASSERT(size <= s.len);
-  ASSERT(0 <= size);
+  assume(SpanValid(s));
+  assume(size <= s.len);
+  assume(0 <= size);
 
   return SPAN(s.ptr, size);
 }
 
 inline Span
 SpanTail(Span s, Size size) {
-  ASSERT(SpanValid(s));
-  ASSERT(size <= s.len);
-  ASSERT(0 <= size);
+  assume(SpanValid(s));
+  assume(size <= s.len);
+  assume(0 <= size);
 
   return SPAN(&s.ptr[s.len - size], size); 
 }
 
 inline Span
 SpanSub(Span s, Size startIncl, Size endExcl) {
-  ASSERT(SpanValid(s));
-  ASSERT(0 <= startIncl && startIncl < s.len);
-  ASSERT(0 <= endExcl && endExcl <= s.len);
+  assume(SpanValid(s));
+  assume(0 <= startIncl && startIncl < s.len);
+  assume(0 <= endExcl && endExcl <= s.len);
   return SPAN(&s.ptr[startIncl], endExcl - startIncl);
 }
 
 inline bool
 SpanEqual(Span s1, Span s2) {
-  ASSERT(SpanValid(s1));
-  ASSERT(SpanValid(s2));
+  assume(SpanValid(s1));
+  assume(SpanValid(s2));
 
   if(s1.len != s2.len) {
     return false;
@@ -65,7 +68,7 @@ SpanEqual(Span s1, Span s2) {
     // Better branch prediciton with the below. Probably better for small spans
     // or when equal is more often true than false.
     // foreach(...) {count += s1 == s2;} return count == s1.len;
-    FOREACHI(s1.len) {
+    for(Size i = 0; i < s1.len; ++i) {
       if(s1.ptr[i] != s2.ptr[i]) return false;
     }
     return true;
@@ -87,9 +90,9 @@ spanstrlen(char* str) {
 
 inline Span
 SpanTrimStart(Span s) {
-  ASSERT(SpanValid(s));
+  assume(SpanValid(s));
 
-  FOREACHI(s.len) {
+  for(Size i = 0; i < s.len; ++i) {
     if(!ISSPACE(s.ptr[i])) return SPAN(&s.ptr[i], s.len - i);
   }
   return SPAN(s.ptr,0);
@@ -97,7 +100,7 @@ SpanTrimStart(Span s) {
 
 inline Span
 SpanTrimEnd(Span s) {
-  ASSERT(SpanValid(s));
+  assume(SpanValid(s));
 
   Size i = s.len - 1;
   for(; i >= 0; --i) 
@@ -117,10 +120,10 @@ SpanFromString(char* str) {
 
 inline SpanPair
 SpanCut(Span s, Byte b) {
-  ASSERT(SpanValid(s));
-  ASSERT(s.len != 0);
+  assume(SpanValid(s));
+  assume(s.len != 0);
 
-  FOREACHI(s.len) {
+  for(Size i = 0; i < s.len; ++i) {
     if(s.ptr[i] == b)
       return (SpanPair) {SPAN(s.ptr, i), SPAN(&s.ptr[i + 1], s.len - i - 1)
       };
@@ -131,8 +134,8 @@ SpanCut(Span s, Byte b) {
 
 inline SpanPair
 SpanRCut(Span s, Byte b) {
-  ASSERT(SpanValid(s));
-  ASSERT(s.len != 0);
+  assume(SpanValid(s));
+  assume(s.len != 0);
 
   for(Size i = s.len - 1; i >= 0; i--) {
     if(s.ptr[i] == b)
@@ -144,8 +147,8 @@ SpanRCut(Span s, Byte b) {
 
 inline bool
 SpanContains(Span s, Byte b) {
-  ASSERT(SpanValid(s));
-  FOREACHI(s.len) {
+  assume(SpanValid(s));
+  for(Size i = 0; i < s.len; ++i) {
     if(s.ptr[i] == b) return true;
   }
   return false;
@@ -174,7 +177,7 @@ Span SpanFromUlong1(unsigned long value) {
 }
 inline unsigned long
 SpanToUlong(Span s) {
-  ASSERT(SpanValid(s));
+  assume(SpanValid(s));
 
   const Span digits = S("0123456789");
   const unsigned long base = 10;

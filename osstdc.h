@@ -8,16 +8,16 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "Utils.h"
-#include "Span.h"
-#include "Buffer.h"
+#include "base.h"
+#include "span.h"
+#include "buffer.h"
 
-static inline NORETURN void
+static inline void
 OsTrap(void) {
   abort();
 }
 
-static inline NORETURN void
+static inline void
 OsOom(void) {
   abort();
 }
@@ -39,8 +39,8 @@ SpanResult OsSlurp(char* path, Size maxsize, Buffer* buf);
 #ifdef OS_STDC_IMPL
 #define OS_STDC_IMPL
 
-NORETURN void OsTrap(void);
-NORETURN void OsOom(void);
+void OsTrap(void);
+void OsOom(void);
 
 int themain(int argc, char** argv);
 int main(int argc, char** argv) { return themain(argc, argv); }

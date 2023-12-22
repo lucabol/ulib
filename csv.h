@@ -6,7 +6,7 @@
 #include <stdnoreturn.h>
 #include <stdlib.h>
 
-#include "Span.h"
+#include "span.h"
 
 typedef enum { Value,  Newline,  End,  EEndInQuoted,  EFullBuffer } CsvTokenType;
 

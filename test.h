@@ -4,15 +4,15 @@
 bool __gotassert = false;
 
 #ifdef DEBUG
-#  define ASSERT(cond) do { if(!(cond)) {__gotassert = true;} } while(0)
-#  define TFAILASSERT(stmt) do {                     \
-    __gotassert = false; stmt; if(!__gotassert) TASSERT(__gotassert); __gotassert = false;\
+#  define assume(cond) do { if(!(cond)) {__gotassert = true;} } while(0)
+#  define tfailassert(stmt) do {                     \
+    __gotassert = false; stmt; if(!__gotassert) tassert(__gotassert); __gotassert = false;\
   } while(false) 
 #else
-#  define TFAILASSERT(stmt)
+#  define tfailassert(stmt)
 #endif
 
-#   define TASSERT(expr) do {                                         \
+#   define tassert(expr) do {                                         \
     __total++; __testt++;                                             \
     if(__gotassert) fprintf(stderr, "ASSERT: " #expr ", line:%i\n", __LINE__);       \
     else if(!(expr)) fprintf(stderr, "ERROR: " #expr ", line:%i\n", __LINE__);       \

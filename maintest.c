@@ -2,64 +2,60 @@
 #include <stdio.h>
 #include <string.h>
 
-// This has to come first as it changes the ASSERT semantic in the other include files
-#include "Test.h"
+// This has to come first as it changes the 'assume' semantic in the other include files
+#include "test.h"
 
 #define BUFFER_IMPL
-#include "Buffer.h"
+#include "buffer.h"
 
 #define SPAN_IMPL
-#include "Span.h"
+#include "span.h"
 
 #define OS_STDC_IMPL
-#include "OsStdc.h"
+#include "osstdc.h"
 
 #define CSV_IMPL
-#include "Csv.h"
+#include "csv.h"
 
-#include "DodStruct.h"
+#include "dodstruct.h"
 
-#ifndef __WINDOWS__
-#define DATA "/home/lucabol/dev/ulib/data/"
-#else
-#define DATA "c:\Users\lucabol\dev\ulibtest\data"
-#endif
+#define DATA "data/"
 
 TEST_INIT;
 
 void
 test_span() {
   Span s1 = S("Hello");
-  TASSERT(SpanValid(s1));
-  TASSERT(s1.len == 5);
+  tassert(SpanValid(s1));
+  tassert(s1.len == 5);
 
   Span s2 = S("");
-  TASSERT(SpanValid(s2));
-  TASSERT(s2.len == 0);
+  tassert(SpanValid(s2));
+  tassert(s2.len == 0);
 
   const char c3[] = "charray";
   Span s3 = S(c3);
-  TASSERT(SpanValid(s3));
-  TASSERT(s3.len == 7);
+  tassert(SpanValid(s3));
+  tassert(s3.len == 7);
 
-  TASSERT(SpanEqual(SpanHead(s3, 2), S("ch")));
-  TASSERT(SpanEqual(SpanHead(s3, 0), S("")));
-  TASSERT(SpanEqual(SpanHead(s3, 7), s3));
+  tassert(SpanEqual(SpanHead(s3, 2), S("ch")));
+  tassert(SpanEqual(SpanHead(s3, 0), S("")));
+  tassert(SpanEqual(SpanHead(s3, 7), s3));
 
-  TASSERT(SpanEqual(S("bob"), S("bob")));
-  TASSERT(!SpanEqual(S("bob"), S("boby")));
-  TASSERT(!SpanEqual(S("bob"), S("bo")));
-  TASSERT(!SpanEqual(S("bo"), S("bob")));
-  TASSERT(SpanEqual(S(""), S("")));
+  tassert(SpanEqual(S("bob"), S("bob")));
+  tassert(!SpanEqual(S("bob"), S("boby")));
+  tassert(!SpanEqual(S("bob"), S("bo")));
+  tassert(!SpanEqual(S("bo"), S("bob")));
+  tassert(SpanEqual(S(""), S("")));
 
-  TASSERT(SpanEqual(SpanTail(S("abcd"),2), S("cd")));
-  TASSERT(SpanEqual(SpanTail(S("abcd"),0), S("")));
-  TASSERT(SpanEqual(SpanTail(S("abcd"),4), S("abcd")));
-  TASSERT(SpanEqual(SpanTail(S(""),0), S("")));
+  tassert(SpanEqual(SpanTail(S("abcd"),2), S("cd")));
+  tassert(SpanEqual(SpanTail(S("abcd"),0), S("")));
+  tassert(SpanEqual(SpanTail(S("abcd"),4), S("abcd")));
+  tassert(SpanEqual(SpanTail(S(""),0), S("")));
 
   #define CUTEQ(s,h,t) \
-    TASSERT(SpanEqual(SpanCut(S((#s)), 'K').head, S(#h))); \
-    TASSERT(SpanEqual(SpanCut(S((#s)), 'K').tail, S(#t))) 
+    tassert(SpanEqual(SpanCut(S((#s)), 'K').head, S(#h))); \
+    tassert(SpanEqual(SpanCut(S((#s)), 'K').tail, S(#t))) 
 
   CUTEQ(abKde,ab,de);
   CUTEQ(abK,ab,);
@@ -69,9 +65,9 @@ test_span() {
   CUTEQ(aKb,a,b);
   CUTEQ(K,,);
 
-  #define TSTART(x, y) TASSERT(SpanEqual(SpanTrimStart(S((x))), S((y))))
-  #define TEND(x, y) TASSERT(SpanEqual(SpanTrimEnd(S((x))), S((y))))
-  #define TTRIM(x, y) TASSERT(SpanEqual(SpanTrim(S((x))), S((y))))
+  #define TSTART(x, y) tassert(SpanEqual(SpanTrimStart(S((x))), S((y))))
+  #define TEND(x, y) tassert(SpanEqual(SpanTrimEnd(S((x))), S((y))))
+  #define TTRIM(x, y) tassert(SpanEqual(SpanTrim(S((x))), S((y))))
   TSTART("","");
   TSTART(" ","");
   TSTART("a","a");
@@ -112,40 +108,40 @@ test_buffer() {
 
   #define OKALLOC40 (BufferTryAlloc(&b1, 40).data.len == 40)
 
-  TASSERT(BufferValid(&b1));
-  TASSERT(OKALLOC40);
-  TASSERT(OKALLOC40);
-  TASSERT(!OKALLOC40);
-  TASSERT(BufferValid(&b1));
-  TASSERT(!BufferTryAlloc(&b1, 20).error);
-  TASSERT(BufferValid(&b1));
-  TASSERT(BufferTryAlloc(&b1, 1).error);
+  tassert(BufferValid(&b1));
+  tassert(OKALLOC40);
+  tassert(OKALLOC40);
+  tassert(!OKALLOC40);
+  tassert(BufferValid(&b1));
+  tassert(!BufferTryAlloc(&b1, 20).error);
+  tassert(BufferValid(&b1));
+  tassert(BufferTryAlloc(&b1, 1).error);
 
   b1.index = 0;
-  TFAILASSERT(BufferTryAlloc(&b1,0));
+  tfailassert(BufferTryAlloc(&b1,0));
 
 }
 
 void test_struct() {
   Struct1(P1,100, int,Count);
   P1Count[P1Idx] = 1;
-  TASSERT(P1Count[P1Idx] == 1);
+  tassert(P1Count[P1Idx] == 1);
 
   Struct2(P2,200, int,Count, float, FVal);(void)P2FVal;
   P2Count[P2Idx] = 2;
-  TASSERT(P2Count[P2Idx] == 2.0);
+  tassert(P2Count[P2Idx] == 2.0);
 
   Struct3(P3,200, int,Count, float, FVal,int,KVal);(void)P3FVal;(void)P3KVal;
   P3Count[P3Idx] = 2;
-  TASSERT(P3Count[P2Idx] == 2.0);
+  tassert(P3Count[P2Idx] == 2.0);
 
   Struct4(P4,200, int,Count, float, FVal,int,KVal,int,CVal);(void)P4FVal;(void)P4KVal;(void)P4CVal;
   P4Count[P4Idx] = 2;
-  TASSERT(P4Count[P2Idx] == 2.0);
+  tassert(P4Count[P2Idx] == 2.0);
 
   Struct5(P5,200, int,Count, float, FVal,int,KVal,int,CVal,int,GVal);(void)P5FVal;(void)P5KVal;(void)P5CVal;(void)P5GVal;
   P5Count[P5Idx] = 2;
-  TASSERT(P5Count[P2Idx] == 2.0);
+  tassert(P5Count[P2Idx] == 2.0);
 }
 
 void
@@ -197,7 +193,7 @@ testcsvarray(char* values[], int n) {
   char dest[1024];
   tocsvstring(values, n, dest, 1024);
   bool res = equaltest(values, n, SpanFromString(dest));
-  TASSERT(res);
+  tassert(res);
 }
 
 #define TESTCSV(...) {                                 \
@@ -225,15 +221,15 @@ test_slurp() {
   Buffer b1 = BufferInit(data, 100);
 
   SpanResult sr = OsSlurp(DATA "slurp1.txt", 100, &b1);
-  TASSERT(!sr.error);
-  TASSERT(BufferAvail(&b1) == 100);
+  tassert(!sr.error);
+  tassert(BufferAvail(&b1) == 100);
   
   sr = OsSlurp(DATA "slurp2.txt", 100, &b1);
-  TASSERT(!sr.error);
-  TASSERT(SpanEqual(sr.data, S("0123456789\n")));
+  tassert(!sr.error);
+  tassert(SpanEqual(sr.data, S("0123456789\n")));
 
   sr = OsSlurp(DATA "errorslurp.txt", 100, &b1);
-  TASSERT(sr.error);
+  tassert(sr.error);
 }
 
 int
